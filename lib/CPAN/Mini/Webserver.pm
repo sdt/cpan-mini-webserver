@@ -354,6 +354,10 @@ sub _packages_with_search_preview {
 sub _add_search_preview {
     my ( $self, $package, $q ) = @_;
 
+    if (! $self->config->{search_preview}) {
+        return { match => {}, pkg => $package };
+    }
+
     my $content = $package->file_content;
     my $parser  = Pod::Simple::Text->new;
     $parser->no_whining( 1 );
@@ -365,7 +369,9 @@ sub _add_search_preview {
     $content =~ s/[\n\r]/ /g;
     $content =~ s/\s+/ /g;
 
-    my ( $match ) = ( $content =~ /($q)/i );
+    my ( $match ) = ( $content =~ /($q)/i )
+        or return { match => {}, pkg => $package };
+
     my $length = length $match;
     my $pos = index $content, $match;
 
