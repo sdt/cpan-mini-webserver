@@ -502,10 +502,30 @@ sub install_page {
 
     warn sprintf "Installing '%s'\n", $distribution->prefix;
 
-    require CPAN;    # loads CPAN::Shell
-    CPAN::Shell->install( $distribution->prefix );
+    $self->_install_with_cpanm($distribution->prefix);
 
     printf '</pre><a href="/~%s/%s">Go back</a></body></html>', $self->pauseid, $self->distvname;
+}
+
+sub _install_with_cpanm {
+    my ($self, $package) = @_;
+
+    my $pid = fork;
+    if (! defined $pid) {
+        print 'fork() failed. Retry?';
+    }
+    elsif ($pid) {
+        waitpid($pid, 0);
+    }
+    else {
+        open(STDERR, '>&STDOUT');
+        my @cmd = ('cpanm', '--reinstall',
+                            '--mirror' => $self->directory,
+                            '--mirror-only',
+                            $package);
+        print join(' ', @cmd), "\n\n";
+        exec(@cmd);
+    }
 }
 
 sub file_page {
